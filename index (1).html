@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MY Nutrition & Grocery Planner</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #10b981;
+      --blue: #38bdf8;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
+    .app { max-width: 900px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+    h1 { font-size: 1.35rem; margin: 0; font-weight: 700; }
+    .subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+    .toggle-group { display: inline-flex; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+    .toggle-btn { background: transparent; color: var(--muted); border: none; padding: 8px 16px; border-radius: 7px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    .toggle-btn.active { background: var(--accent); color: #062c22; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    .kpi-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .kpi-value { font-size: 1.7rem; font-weight: 800; margin: 6px 0 4px; }
+    .kpi-sub { font-size: 0.82rem; color: var(--muted); }
+    .status-banner { padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 500; margin-bottom: 18px; border: 1px solid transparent; }
+    .status-ok { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: #6ee7b7; }
+    .status-danger { background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.35); color: #fda4af; }
+    .status-warn { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
+    .main-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .main-grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .panel-title { font-size: 1rem; font-weight: 700; margin: 0; }
+    .reset-btn { background: var(--surface-2); color: var(--text); border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+    .food-card { background: rgba(15, 23, 42, 0.55); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .food-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .food-name { font-weight: 600; font-size: 0.95rem; }
+    .food-cost { font-weight: 700; color: var(--accent); font-size: 0.95rem; }
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 6px; }
+    .step-btn { background: var(--surface-2); color: var(--text); border: none; width: 32px; height: 32px; border-radius: 7px; font-weight: 700; font-size: 1.1rem; cursor: pointer; }
+    .qty-badge { min-width: 78px; text-align: right; font-size: 0.88rem; font-weight: 600; }
+    .food-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+    .price-edit { background: transparent; border: none; border-bottom: 1px dashed var(--muted); color: var(--text); width: 52px; font-size: 0.78rem; text-align: right; }
+    .macro-row { margin-bottom: 12px; }
+    .macro-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
+    .progress-track { height: 10px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 6px; }
+    .micro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .micro-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
+    .micro-name { font-size: 0.75rem; color: var(--muted); }
+    .micro-pct { font-size: 0.95rem; font-weight: 700; margin-top: 2px; }
+    .shop-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; }
+    .shop-row:last-child { border-bottom: none; }
+    input[type="range"] { min-width: 40px; height: 28px; }
+    .qty-input { width: 76px; }
+    input:not([type="range"]) { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px; max-width: 100%; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .food-top { gap: 12px; }
+    .food-meta { gap: 8px; flex-wrap: wrap; align-items: center; }
+    .food-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .food-form label { display: grid; gap: 5px; font-size: .82rem; color: var(--muted); }
+    .food-form .wide { grid-column: 1 / -1; }
+    .primary-btn { padding: 10px 16px; background: var(--accent); color: #062c22; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .helper { color: var(--muted); font-size: .8rem; line-height: 1.5; }
+    .step-btn { flex-shrink: 0; }
+    .qty-badge { min-width: 0; }
+    .targets-panel { border-top: 3px solid var(--accent); }
+    .targets-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
+    .targets-form label { display: grid; gap: 6px; font-size: .82rem; color: var(--muted); }
+    select { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px; width: 100%; }
+    .eyebrow { color: var(--accent); font-size: .7rem; letter-spacing: .09em; }
+    .estimate-btn { min-height: 36px; }
+    button:disabled { opacity: .5; cursor: wait; }
+    .scan-box { margin-top: 16px; padding: 14px; border: 1px dashed var(--blue); border-radius: 10px; }
+    .scan-box h3 { margin: 0; font-size: .95rem; }
+    .scan-box input { display: block; width: 100%; margin: 8px 0 12px; }
+    #labelPreview { display: block; max-width: 100%; max-height: 200px; margin-bottom: 12px; border-radius: 8px; }
+    #labelPreview[hidden] { display: none; }
+    #librarySearch { width: 100%; margin: 6px 0 10px; }
+    #savedFoods { max-height: 370px; overflow-y: auto; }
+    .library-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .library-row strong { font-size: .85rem; overflow-wrap: anywhere; }
+    .library-row .helper { margin: 4px 0 0; }
+    .library-row button { flex-shrink: 0; }
+    .food-name { overflow-wrap: anywhere; }
+    @media (max-width: 540px) { .targets-form { grid-template-columns: 1fr 1fr; } .food-form { gap: 10px; } }
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>MY Nutrition & Grocery Planner</h1>
+      <div class="subtitle" id="profileSummary">Your portions, your targets.</div>
+    </div>
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="btnDaily" onclick="setMode('daily')">Daily View</button>
+      <button class="toggle-btn" id="btnWeekly" onclick="setMode('weekly')">Weekly (7 Days)</button>
+    </div>
+  </header>
+
+  <section class="panel targets-panel" aria-labelledby="targetsTitle">
+    <div class="panel-header"><h2 class="panel-title" id="targetsTitle">Your daily targets</h2><span class="eyebrow">PERSONALIZE</span></div>
+    <form id="targetsForm" class="targets-form">
+      <label>Body weight (kg)<input name="weight" type="number" min="1" max="1000" step="0.1" required></label>
+      <label>Goal<select name="goal"><option value="lose">Lose weight</option><option value="maintain">Maintain weight</option><option value="gain">Gain weight</option></select></label>
+      <label>Protein factor (g/kg)<input name="proteinPerKg" type="number" min="0.1" max="5" step="0.1" required></label>
+      <button class="reset-btn estimate-btn" id="estimateTargets" type="button">Estimate from weight</button>
+      <label>Energy target (kcal/day)<input name="energy" type="number" min="1" max="20000" step="1" required></label>
+      <label>Protein target (g/day)<input name="protein" type="number" min="1" max="2000" step="0.1" required></label>
+      <button class="primary-btn" type="submit">Apply targets</button>
+    </form>
+    <p class="helper" id="targetHelp" role="status">Set your own targets, or estimate using weight × 27 / 32 / 37 kcal for loss / maintenance / gain and your protein factor. These are rough starting estimates, not a BMR calculation.</p>
+  </section>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-title" id="costTitle">Daily Grocery Cost</div>
+      <div class="kpi-value" style="color:var(--accent);" id="kpiCost">RM0.00</div>
+      <div class="kpi-sub" id="kpiCostSub">Weekly: RM0.00</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title" id="calTitle">Daily Energy</div>
+      <div class="kpi-value" id="kpiCal">0 kcal</div>
+      <div class="kpi-sub" id="kpiCalSub"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title" id="proTitle">Daily Protein</div>
+      <div class="kpi-value" style="color:var(--blue);" id="kpiPro">0g</div>
+      <div class="kpi-sub" id="kpiProSub">Your daily protein target</div>
+    </div>
+  </div>
+
+  <div id="statusBanner" class="status-banner status-ok"></div>
+
+  <div class="main-grid">
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Adjust Daily Portions</h2>
+          <button class="reset-btn" onclick="resetDefaults()">Reset</button>
+        </div>
+        <p class="helper">Controls always adjust daily portions. Weekly View shows the resulting seven-day totals.</p>
+        <p class="helper" id="saveStatus" role="status">Loading saved plan…</p><button type="button" class="reset-btn" id="retryPlan" hidden>Retry loading plan</button>
+        <div id="foodList"></div>
+        <details>
+          <summary class="reset-btn">Add a food / scan a label</summary>
+          <div class="scan-box">
+            <h3>Read a nutrition label</h3>
+            <p class="helper">Upload a clear label photo. AI fills the form below; check the serving size and every value before saving. The photo is sent for AI reading and is not saved in your food library.</p>
+            <label for="labelPhoto" class="helper">Nutrition label photo (JPEG, PNG, WebP, up to 10 MB)</label>
+            <input id="labelPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+            <img id="labelPreview" alt="Selected nutrition label" hidden>
+            <button type="button" class="primary-btn" id="scanLabel">Read label photo</button>
+            <p class="helper" role="status" id="scanStatus">You can also enter the values manually.</p>
+          </div>
+          <p class="helper">Use the same serving basis as the label, such as 40 g or 100 g. All nutrition values and the price refer to that serving. Micronutrients are unknown for custom foods.</p>
+          <form id="addFoodForm" class="food-form">
+            <label class="wide">Food name<input name="name" required maxlength="120"></label>
+            <label>Serving unit<input name="unit" required maxlength="30" placeholder="g, eggs, cups"></label>
+            <label>Units per serving<input name="serving" type="number" min="0.01" step="any" max="100000" value="100" required></label>
+            <label>Daily quantity (units)<input name="qty" type="number" min="0" max="100000" step="any" value="100" required></label>
+            <label>Price per serving (RM)<input name="price" type="number" min="0" max="100000" step="any" required></label>
+            <label>Energy per serving (kcal)<input name="cal" type="number" min="0" max="100000" step="any" required></label>
+            <label>Protein per serving (g)<input name="p" type="number" min="0" max="100000" step="any" required></label>
+            <label>Carbs per serving (g)<input name="c" type="number" min="0" max="100000" step="any" required></label>
+            <label>Fat per serving (g)<input name="f" type="number" min="0" max="100000" step="any" required></label>
+            <label>Fiber per serving (g)<input name="fib" type="number" min="0" max="100000" step="any" value="0" required></label>
+            <button class="primary-btn wide" type="submit">Save food &amp; add to plan</button>
+          </form>
+        </details>
+      </div>
+    </div>
+
+    <div>
+      <section class="panel" aria-labelledby="libraryTitle">
+        <div class="panel-header"><h2 class="panel-title" id="libraryTitle">Saved foods</h2><span class="eyebrow" id="libraryCount"></span></div>
+        <p class="helper">Foods stay here when removed from your plan. Saved for this browser.</p>
+        <label class="helper" for="librarySearch">Find a saved food</label>
+        <input type="search" id="librarySearch" placeholder="Search foods…">
+        <div id="savedFoods"></div>
+        <p id="libraryStatus" class="helper" role="status"></p>
+      </section>
+      <div class="panel">
+        <div class="panel-header"><h2 class="panel-title">Macronutrient Breakdown</h2></div>
+        <p class="helper">Protein uses your target. Other guides scale with energy: carbs 50%, fat 30%, fiber 14 g / 1,000 kcal.</p>
+        <div id="macroBars"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2 class="panel-title">Daily Micronutrient Coverage</h2></div>
+        <div class="micro-grid" id="microGrid"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2 class="panel-title">7-Day Grocery List</h2></div>
+        <div id="shoppingList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
