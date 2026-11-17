@@ -5,129 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MY Nutrition & Grocery Dashboard</title>
   <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <meta name="theme-color" content="#0f172a" />
   <style>
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --accent: #10b981;
-      --blue: #38bdf8;
-      --amber: #f59e0b;
-      --rose: #f43f5e;
-      --border: #334155;
-    }
-    * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); }
-    body { display: flex; flex-direction: column; overflow: hidden; }
-
-    /* Top Header */
-    .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .brand h1 { font-size: 1.15rem; margin: 0; font-weight: 700; }
-    .brand .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    :root { --bg: #0b1120; --surface: #131c31; --surface-2: #1e293b; --surface-3: #334155; --text: #f8fafc; --muted: #94a3b8; --accent: #10b981; --blue: #38bdf8; --amber: #f59e0b; --rose: #f43f5e; --border: #263349; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    @media (max-width: 900px) { body { height: auto; min-height: 100vh; overflow-y: auto; padding-bottom: 68px; } }
+    .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .brand h1 { font-size: 1.05rem; margin: 0; font-weight: 700; }
+    .brand-sub { font-size: 0.75rem; color: var(--muted); }
     .top-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .btn { background: var(--surface-2); color: var(--text); border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #475569; }
-    .btn-primary { background: var(--accent); color: #062c22; border-color: var(--accent); }
-    .btn-primary:hover { background: #34d399; }
+    .btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 11px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: var(--surface-3); }
+    .btn-primary { background: var(--accent); color: #052e22; border: none; }
     .toggle-group { display: inline-flex; background: var(--bg); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
-    .toggle-btn { background: transparent; color: var(--muted); border: none; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.78rem; cursor: pointer; }
-    .toggle-btn.active { background: var(--accent); color: #062c22; }
-
-    /* KPI Strip */
-    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px 18px; flex-shrink: 0; }
-    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; }
+    .toggle-btn { background: transparent; color: var(--muted); border: none; padding: 5px 11px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+    .toggle-btn.active { background: var(--accent); color: #052e22; }
+    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px 18px; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    @media (max-width: 900px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
     .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-    .kpi-val { font-size: 1.35rem; font-weight: 800; margin: 2px 0; }
-    .kpi-sub { font-size: 0.75rem; color: var(--muted); }
-    .kpi.status-ok { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); color: #6ee7b7; }
-    .kpi.status-warn { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
-    .kpi.status-danger { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.35); color: #fda4af; }
-    .status-text { font-size: 0.82rem; font-weight: 600; line-height: 1.35; }
-
-    /* 3-Column Dashboard Workspace */
-    .workspace { display: grid; grid-template-columns: 1.35fr 1fr 0.95fr; gap: 14px; padding: 0 18px 16px; flex: 1; min-height: 0; }
-    .col-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-    .col-header { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .kpi-val { font-size: 1.25rem; font-weight: 800; margin: 2px 0; }
+    .kpi-sub { font-size: 0.74rem; color: var(--muted); }
+    .status-pill { display: flex; align-items: center; padding: 10px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 500; line-height: 1.35; border: 1px solid transparent; }
+    .status-ok { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #6ee7b7; }
+    .status-warn { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #fcd34d; }
+    .status-danger { background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.35); color: #fda4af; }
+    .dash-grid { display: grid; grid-template-columns: 1.25fr 1fr 0.9fr; gap: 12px; padding: 12px 18px; flex: 1; min-height: 0; }
+    @media (max-width: 900px) { .dash-grid { display: block; padding: 12px; } }
+    .col-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    @media (max-width: 900px) { .col-card { display: none; margin-bottom: 12px; } .col-card.mobile-active { display: flex; } }
+    .col-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .col-title { font-size: 0.9rem; font-weight: 700; margin: 0; }
     .col-body { padding: 12px 14px; overflow-y: auto; flex: 1; }
-
-    /* Food Cards */
-    .food-card { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 9px; }
+    .food-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 8px; }
     .food-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .food-name { font-weight: 600; font-size: 0.88rem; }
     .food-cost { font-weight: 700; color: var(--accent); font-size: 0.88rem; }
     .slider-row { display: flex; align-items: center; gap: 8px; }
     input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 5px; }
-    .step-btn { background: var(--surface-2); color: var(--text); border: none; width: 26px; height: 26px; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer; }
-    .qty-input { width: 58px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 6px; font-size: 0.82rem; text-align: right; font-weight: 600; }
+    .step-btn { background: var(--surface-2); color: var(--text); border: none; width: 26px; height: 26px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .qty-input { width: 58px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 5px; text-align: right; font-size: 0.82rem; }
     .food-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; color: var(--muted); margin-top: 6px; }
-    .price-edit { background: transparent; border: none; border-bottom: 1px dashed var(--muted); color: var(--text); width: 48px; font-size: 0.74rem; text-align: right; }
-    .mini-del { background: transparent; border: none; color: #f43f5e; font-size: 0.74rem; cursor: pointer; padding: 0; }
-
-    /* Macro Bars & Micro Grid */
-    .macro-row { margin-bottom: 11px; }
+    .price-edit { background: transparent; border: none; border-bottom: 1px dashed var(--muted); color: var(--text); width: 46px; font-size: 0.74rem; text-align: right; }
+    .del-btn { background: transparent; border: none; color: #f43f5e; font-size: 0.74rem; cursor: pointer; padding: 0; }
+    .macro-row { margin-bottom: 10px; }
     .macro-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
-    .progress-track { height: 8px; background: var(--bg); border-radius: 5px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 5px; transition: width 0.2s; }
-    .section-divider { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 14px 0 8px; font-weight: 700; }
-    .micro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .track { height: 8px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 5px; transition: width 0.2s; }
+    .section-sub { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 14px 0 8px; font-weight: 700; }
+    .micro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .micro-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 6px; text-align: center; }
-    .micro-name { font-size: 0.7rem; color: var(--muted); }
-    .micro-pct { font-size: 0.88rem; font-weight: 700; margin-top: 2px; }
-
-    /* Shopping List */
-    .shop-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; gap: 8px; }
+    .micro-name { font-size: 0.72rem; color: var(--muted); }
+    .micro-pct { font-size: 0.9rem; font-weight: 700; margin-top: 2px; }
+    .shop-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
     .shop-row:last-child { border-bottom: none; }
-
-    /* Slide-Over Drawers */
-    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 40; display: none; }
-    .drawer-backdrop.open { display: block; }
-    .drawer { position: fixed; top: 0; right: -420px; width: 100%; max-width: 400px; height: 100%; background: var(--surface); border-left: 1px solid var(--border); z-index: 50; transition: right 0.25s ease; display: flex; flex-direction: column; }
-    .drawer.open { right: 0; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: flex-end; z-index: 50; }
+    .overlay.open { display: flex; }
+    .drawer { width: 420px; max-width: 100%; background: var(--surface); border-left: 1px solid var(--border); height: 100%; display: flex; flex-direction: column; }
     .drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-    .drawer-body { padding: 16px; overflow-y: auto; flex: 1; }
-    .field { margin-bottom: 10px; }
-    .field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
-    .field input, .field select { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 0.86rem; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .lib-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
-    .helper { font-size: 0.76rem; color: var(--muted); margin: 4px 0 0; }
-
-    /* Mobile Tabs */
-    .mobile-tabs { display: none; background: var(--surface); border-top: 1px solid var(--border); padding: 6px; flex-shrink: 0; }
-    .mobile-tabs button { flex: 1; background: transparent; border: none; color: var(--muted); padding: 8px 4px; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
-    .mobile-tabs button.active { background: var(--surface-2); color: var(--accent); }
-
-    @media (max-width: 900px) {
-      .kpi-strip { grid-template-columns: repeat(2, 1fr); padding: 10px 12px; gap: 8px; }
-      .workspace { display: block; padding: 0 12px 10px; }
-      .col-panel { height: 100%; display: none; }
-      .col-panel.mobile-active { display: flex; }
-      .mobile-tabs { display: flex; gap: 6px; }
-    }
+    .drawer-body { padding: 14px 16px; overflow-y: auto; flex: 1; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.75rem; color: var(--muted); }
+    input[type="text"], input[type="number"], select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 7px 9px; border-radius: 7px; font-size: 0.84rem; width: 100%; }
+    .search-box { display: flex; gap: 6px; margin-bottom: 8px; }
+    .search-results { max-height: 170px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); margin-bottom: 12px; display: none; }
+    .search-item { padding: 8px 10px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 0.8rem; }
+    .search-item:hover { background: var(--surface-2); }
+    .micro-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+    .lib-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+    .mobile-tabs { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); z-index: 40; }
+    @media (max-width: 900px) { .mobile-tabs { display: grid; grid-template-columns: repeat(3, 1fr); } }
+    .tab-btn { background: transparent; border: none; color: var(--muted); padding: 12px 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .tab-btn.active { color: var(--accent); border-top: 2px solid var(--accent); }
   </style>
 </head>
 <body>
-  <header class="topbar">
+  <div class="topbar">
     <div class="brand">
       <h1>MY Nutrition & Grocery Dashboard</h1>
-      <div class="sub" id="profileSummary">72.5 kg · Maintain · Target: 2,000 kcal | 90g Protein</div>
+      <div class="brand-sub" id="profileSummary">72.5 kg • Maintain • Target: 2,000 kcal | 90g Protein</div>
     </div>
     <div class="top-actions">
       <button class="btn btn-primary" onclick="openDrawer('addDrawer')">+ Add Food</button>
-      <button class="btn" onclick="openDrawer('libDrawer')">Saved Library (<span id="libCountBadge">0</span>)</button>
+      <button class="btn" onclick="openDrawer('libDrawer')" id="libBtn">Saved Library (0)</button>
       <button class="btn" onclick="openDrawer('targetDrawer')">Targets & BMR</button>
       <div class="toggle-group">
         <button class="toggle-btn active" id="btnDaily" onclick="setMode('daily')">Daily</button>
         <button class="toggle-btn" id="btnWeekly" onclick="setMode('weekly')">Weekly (7d)</button>
       </div>
     </div>
-  </header>
+  </div>
 
-  <section class="kpi-strip">
+  <div class="kpi-strip">
     <div class="kpi">
       <div class="kpi-label" id="costTitle">Daily Cost</div>
       <div class="kpi-val" style="color:var(--accent);" id="kpiCost">RM0.00</div>
@@ -143,133 +116,126 @@
       <div class="kpi-val" style="color:var(--blue);" id="kpiPro">0g</div>
       <div class="kpi-sub" id="kpiProSub">Target: 90g</div>
     </div>
-    <div class="kpi status-ok" id="statusCard">
-      <div class="status-text" id="statusBanner">Loading dashboard...</div>
-    </div>
-  </section>
+    <div id="statusBanner" class="status-pill status-ok">Loading...</div>
+  </div>
 
-  <main class="workspace">
-    <!-- Left Panel: Foods -->
-    <section class="col-panel mobile-active" id="panelFoods">
-      <div class="col-header">
+  <div class="dash-grid">
+    <div class="col-card mobile-active" id="colFoods">
+      <div class="col-head">
         <h2 class="col-title">Daily Food Portions</h2>
-        <button class="btn" style="padding:4px 9px;font-size:0.75rem;" onclick="resetDefaults()">Reset</button>
+        <button class="btn" onclick="resetDefaults()">Reset</button>
       </div>
       <div class="col-body" id="foodList"></div>
-    </section>
+    </div>
 
-    <!-- Middle Panel: Macros & Micros -->
-    <section class="col-panel" id="panelMacros">
-      <div class="col-header">
+    <div class="col-card" id="colMacros">
+      <div class="col-head">
         <h2 class="col-title">Macros & Micronutrients</h2>
-        <span style="font-size:0.74rem;color:var(--muted);" id="macroPeriodLabel">Daily Totals</span>
+        <span style="font-size:0.75rem;color:var(--muted);" id="macroPeriodLabel">Daily Totals</span>
       </div>
       <div class="col-body">
         <div id="macroBars"></div>
-        <div class="section-divider">Daily Micronutrient Coverage (% RDI)</div>
+        <div class="section-sub">Daily Micronutrient Coverage (% RDI)</div>
         <div class="micro-grid" id="microGrid"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Right Panel: 7-Day Grocery List -->
-    <section class="col-panel" id="panelShop">
-      <div class="col-header">
+    <div class="col-card" id="colShop">
+      <div class="col-head">
         <h2 class="col-title">7-Day Grocery List</h2>
-        <button class="btn" style="padding:4px 9px;font-size:0.75rem;" id="copyShopBtn" onclick="copyShoppingList()">Copy List</button>
+        <button class="btn" id="copyBtn" onclick="copyShoppingList()">Copy List</button>
       </div>
       <div class="col-body" id="shoppingList"></div>
-    </section>
-  </main>
-
-  <nav class="mobile-tabs">
-    <button class="active" id="tabFoods" onclick="switchMobileTab('Foods')">Foods & Sliders</button>
-    <button id="tabMacros" onclick="switchMobileTab('Macros')">Macros & Micros</button>
-    <button id="tabShop" onclick="switchMobileTab('Shop')">Grocery List</button>
-  </nav>
-
-  <!-- Slide-over Backdrop -->
-  <div class="drawer-backdrop" id="backdrop" onclick="closeAllDrawers()"></div>
-
-  <!-- Drawer 1: Add Custom Food -->
-  <aside class="drawer" id="addDrawer">
-    <div class="drawer-head">
-      <strong>+ Add Custom Food</strong>
-      <button class="btn" onclick="closeAllDrawers()">Close</button>
     </div>
-    <div class="drawer-body">
-      <form id="addFoodForm">
-        <div class="field"><label>Food Name</label><input name="name" placeholder="e.g. White Rice (Cooked)" required /></div>
-        <div class="grid-2">
-          <div class="field"><label>Unit</label><input name="unit" placeholder="g, slices, eggs" required /></div>
-          <div class="field"><label>Serving Basis</label><input name="serving" type="number" step="any" min="0.1" value="100" required /></div>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Daily Qty</label><input name="qty" type="number" step="any" min="0" value="100" required /></div>
-          <div class="field"><label>Price per Serving (RM)</label><input name="price" type="number" step="0.01" min="0" value="0.50" required /></div>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Calories (per serving)</label><input name="cal" type="number" step="any" min="0" value="130" required /></div>
-          <div class="field"><label>Protein g (per serving)</label><input name="p" type="number" step="any" min="0" value="2.7" required /></div>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Carbs g (per serving)</label><input name="c" type="number" step="any" min="0" value="28" required /></div>
-          <div class="field"><label>Fat g (per serving)</label><input name="f" type="number" step="any" min="0" value="0.3" required /></div>
-        </div>
-        <div class="field"><label>Fiber g (per serving)</label><input name="fib" type="number" step="any" min="0" value="0.4" required /></div>
-        <button type="submit" class="btn btn-primary" style="width:100%;padding:10px;margin-top:6px;">Save & Add to Plan</button>
-        <p class="helper" id="addStatus"></p>
-      </form>
-    </div>
-  </aside>
+  </div>
 
-  <!-- Drawer 2: Saved Library -->
-  <aside class="drawer" id="libDrawer">
-    <div class="drawer-head">
-      <strong>Saved Food Library</strong>
-      <button class="btn" onclick="closeAllDrawers()">Close</button>
-    </div>
-    <div class="drawer-body">
-      <div class="field"><input id="librarySearch" placeholder="Search saved foods..." /></div>
-      <p class="helper" id="libraryStatus"></p>
-      <div id="savedFoods"></div>
-    </div>
-  </aside>
+  <div class="mobile-tabs">
+    <button class="tab-btn active" onclick="switchTab('colFoods', this)">Foods & Sliders</button>
+    <button class="tab-btn" onclick="switchTab('colMacros', this)">Macros & Micros</button>
+    <button class="tab-btn" onclick="switchTab('colShop', this)">Grocery List</button>
+  </div>
 
-  <!-- Drawer 3: Targets & BMR -->
-  <aside class="drawer" id="targetDrawer">
-    <div class="drawer-head">
-      <strong>Personal Targets & BMR</strong>
-      <button class="btn" onclick="closeAllDrawers()">Close</button>
-    </div>
-    <div class="drawer-body">
-      <form id="targetsForm">
-        <div class="field"><label>Body Weight (kg)</label><input name="weight" type="number" step="0.1" min="30" max="250" required /></div>
-        <div class="field">
-          <label>Goal</label>
-          <select name="goal">
-            <option value="lose">Lose weight (Fat loss)</option>
-            <option value="maintain">Maintain weight</option>
-            <option value="gain">Gain weight (Muscle gain)</option>
-          </select>
+  <div class="overlay" id="addDrawer" onclick="closeOnBackdrop(event, 'addDrawer')">
+    <div class="drawer">
+      <div class="drawer-head">
+        <strong>Add Food (Online Search or Manual)</strong>
+        <button class="btn" onclick="closeDrawer('addDrawer')">Close</button>
+      </div>
+      <div class="drawer-body">
+        <label>Search Online Nutrition Database (USDA + Open Food Facts)</label>
+        <div class="search-box" style="margin-top:4px;">
+          <input type="text" id="onlineQuery" placeholder="e.g., banana, white rice, tofu..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchOnlineFood();}" />
+          <button type="button" class="btn btn-primary" id="searchBtn" onclick="searchOnlineFood()">Search</button>
         </div>
-        <div class="field"><label>Protein Factor (g per kg)</label><input name="proteinPerKg" type="number" step="0.1" min="0.8" max="3.0" required /></div>
-        <button type="button" class="btn" id="estimateTargets" style="width:100%;margin-bottom:12px;">Auto-Calculate Targets</button>
-        <div class="grid-2">
-          <div class="field"><label>Daily Energy (kcal)</label><input name="energy" type="number" min="1200" max="10000" required /></div>
-          <div class="field"><label>Daily Protein (g)</label><input name="protein" type="number" step="0.5" min="30" max="500" required /></div>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%;padding:10px;margin-top:6px;">Apply Targets</button>
-        <p class="helper" id="targetHelp"></p>
-      </form>
-    </div>
-  </aside>
+        <div id="searchStatus" style="font-size:0.76rem;color:var(--muted);margin-bottom:6px;"></div>
+        <div class="search-results" id="searchResults"></div>
 
-  <script src="app.js?v=4"></script>
+        <form id="addFoodForm">
+          <div class="form-grid">
+            <div class="form-group full"><label>Food Name</label><input type="text" name="name" required placeholder="e.g., Cavendish Banana" /></div>
+            <div class="form-group"><label>Serving Size</label><input type="number" name="serving" step="any" min="0.1" value="100" required /></div>
+            <div class="form-group"><label>Unit (g, ml, slice, piece)</label><input type="text" name="unit" value="g" required /></div>
+            <div class="form-group"><label>Price per Serving (RM)</label><input type="number" name="price" step="0.01" min="0" value="0.60" required /></div>
+            <div class="form-group"><label>Initial Daily Qty</label><input type="number" name="qty" step="any" min="0" value="100" required /></div>
+            <div class="form-group"><label>Calories (kcal)</label><input type="number" name="cal" step="any" min="0" required /></div>
+            <div class="form-group"><label>Protein (g)</label><input type="number" name="p" step="any" min="0" required /></div>
+            <div class="form-group"><label>Carbs (g)</label><input type="number" name="c" step="any" min="0" required /></div>
+            <div class="form-group"><label>Fat (g)</label><input type="number" name="f" step="any" min="0" required /></div>
+            <div class="form-group full"><label>Fiber (g)</label><input type="number" name="fib" step="any" min="0" value="0" /></div>
+          </div>
+
+          <label>Micronutrients per Serving (% Daily Value / RDI)</label>
+          <div class="micro-inputs">
+            <div class="form-group"><label>Vit A %</label><input type="number" name="vitA" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Vit B %</label><input type="number" name="vitB" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Vit C %</label><input type="number" name="vitC" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Vit D %</label><input type="number" name="vitD" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Vit E %</label><input type="number" name="vitE" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Vit K %</label><input type="number" name="vitK" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Iron %</label><input type="number" name="iron" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Calcium %</label><input type="number" name="calc" step="any" min="0" value="0" /></div>
+            <div class="form-group"><label>Potassium %</label><input type="number" name="pot" step="any" min="0" value="0" /></div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:12px;padding:9px;">Save & Add to Dashboard</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="libDrawer" onclick="closeOnBackdrop(event, 'libDrawer')">
+    <div class="drawer">
+      <div class="drawer-head"><strong>Saved Food Library</strong><button class="btn" onclick="closeDrawer('libDrawer')">Close</button></div>
+      <div class="drawer-body">
+        <input type="text" id="librarySearch" placeholder="Filter saved foods..." oninput="renderLibrary()" style="margin-bottom:10px;" />
+        <div id="savedFoods"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="targetDrawer" onclick="closeOnBackdrop(event, 'targetDrawer')">
+    <div class="drawer">
+      <div class="drawer-head"><strong>Daily Targets & BMR Settings</strong><button class="btn" onclick="closeDrawer('targetDrawer')">Close</button></div>
+      <div class="drawer-body">
+        <form id="targetsForm">
+          <div class="form-grid">
+            <div class="form-group"><label>Body Weight (kg)</label><input type="number" name="weight" step="0.1" min="30" max="250" required /></div>
+            <div class="form-group"><label>Goal</label><select name="goal"><option value="lose">Fat Loss</option><option value="maintain">Maintain</option><option value="gain">Muscle Gain</option></select></div>
+            <div class="form-group"><label>Protein (g / kg)</label><input type="number" name="proteinPerKg" step="0.1" min="0.5" max="3.5" required /></div>
+            <div class="form-group"><label>Safe BMR Floor (kcal)</label><input type="number" name="bmr" step="10" min="1000" max="4000" required /></div>
+            <div class="form-group"><label>Daily Calorie Target</label><input type="number" name="energy" step="10" min="1000" max="6000" required /></div>
+            <div class="form-group"><label>Daily Protein Target (g)</label><input type="number" name="protein" step="1" min="20" max="400" required /></div>
+          </div>
+          <button type="button" class="btn" style="width:100%;margin-bottom:8px;" onclick="estimateTargets()">Auto-Calculate From Weight & Goal</button>
+          <button type="submit" class="btn btn-primary" style="width:100%;padding:9px;">Apply Targets</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=5"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').then(function(reg) {
-        reg.update();
-      }).catch(function(){});
+      navigator.serviceWorker.register('./sw.js');
     }
   </script>
 </body>
