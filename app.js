@@ -1,3 +1,128 @@
+var viewMode = "daily";
+var searchCache = [];
+
+var defaultFoods = [
+  { id: "bread", name: "Gardenia Wholemeal Bread", qty: 9, min: 0, max: 16, step: 1, unit: "slices", unitLabel: "RM/slice", price: 0.35, cal: 75, p: 4.0, c: 13.0, f: 0.8, fib: 2.0, shopUnit: "loaves", shopDiv: 11.5, micros: { vitA: 0, vitB: 9, vitC: 0, vitD: 0, vitE: 2, vitK: 1, iron: 6, calc: 3, pot: 2 } },
+  { id: "chicken", name: "Chicken Breast (Cooked)", qty: 150, min: 0, max: 400, step: 10, unit: "g", unitLabel: "RM/100g", price: 2.40, priceDiv: 100, cal: 1.65, p: 0.30, c: 0, f: 0.036, fib: 0, shopUnit: "kg", shopDiv: 1000, micros: { vitA: 0.01, vitB: 0.35, vitC: 0, vitD: 0.01, vitE: 0.02, vitK: 0, iron: 0.06, calc: 0.01, pot: 0.06 } },
+  { id: "eggs", name: "Whole Eggs", qty: 3, min: 0, max: 10, step: 1, unit: "eggs", unitLabel: "RM/egg", price: 0.47, cal: 72, p: 6.0, c: 0.4, f: 5.0, fib: 0, shopUnit: "eggs", shopDiv: 1, micros: { vitA: 9, vitB: 11, vitC: 0, vitD: 11, vitE: 4, vitK: 0.2, iron: 5, calc: 2, pot: 1.5 } },
+  { id: "whey", name: "Protein Powder (69.4%)", qty: 0, min: 0, max: 4, step: 0.5, unit: "scoops", unitLabel: "RM/scoop", price: 2.52, cal: 108, p: 20.8, c: 2.5, f: 1.5, fib: 0, shopUnit: "tubs (1.1kg)", shopDiv: 36.6, micros: { vitA: 0, vitB: 4, vitC: 0, vitD: 0, vitE: 0, vitK: 0, iron: 2, calc: 9, pot: 3 } },
+  { id: "broccoli", name: "Broccoli", qty: 100, min: 0, max: 300, step: 25, unit: "g", unitLabel: "RM/100g", price: 1.00, priceDiv: 100, cal: 0.34, p: 0.028, c: 0.07, f: 0.004, fib: 0.026, shopUnit: "kg", shopDiv: 1000, micros: { vitA: 0.04, vitB: 0.08, vitC: 0.99, vitD: 0, vitE: 0.05, vitK: 0.85, iron: 0.04, calc: 0.04, pot: 0.07 } },
+  { id: "carrots", name: "Carrots", qty: 100, min: 0, max: 300, step: 25, unit: "g", unitLabel: "RM/100g", price: 0.45, priceDiv: 100, cal: 0.41, p: 0.009, c: 0.10, f: 0.002, fib: 0.028, shopUnit: "kg", shopDiv: 1000, micros: { vitA: 0.93, vitB: 0.05, vitC: 0.07, vitD: 0, vitE: 0.04, vitK: 0.11, iron: 0.02, calc: 0.03, pot: 0.07 } },
+  { id: "oil", name: "Cooking Oil", qty: 1.5, min: 0, max: 4, step: 0.5, unit: "tbsp", unitLabel: "RM/tbsp", price: 0.10, cal: 120, p: 0, c: 0, f: 14.0, fib: 0, shopUnit: "ml", shopDiv: 0.067, micros: { vitA: 0, vitB: 0, vitC: 0, vitD: 0, vitE: 14, vitK: 8, iron: 0, calc: 0, pot: 0 } }
+];
+
+var defaultSettings = { weight: 72.5, goal: "maintain", energy: 2000, protein: 90, proteinPerKg: 1.2, bmr: 1450 };
+var state = JSON.parse(localStorage.getItem("myNutriDash_v5")) || {
+  foods: JSON.parse(JSON.stringify(defaultFoods)),
+  library: JSON.parse(JSON.stringify(defaultFoods)),
+  settings: Object.assign({}, defaultSettings)
+};
+var foods = state.foods;
+var library = state.library;
+var settings = state.settings;
+
+function save() {
+  foods.forEach(function(f) {
+    var idx = library.findIndex(function(item) { return item.id === f.id; });
+    if (idx < 0) library.push(JSON.parse(JSON.stringify(f)));
+    else library[idx] = JSON.parse(JSON.stringify(f));
+  });
+  localStorage.setItem("myNutriDash_v5", JSON.stringify({ foods: foods, library: library, settings: settings }));
+  renderLibrary();
+}
+
+function escapeHTML(val) {
+  return String(val).replace(/[&<>"']/g, function(c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function openDrawer(id) {
+  document.getElementById(id).classList.add("open");
+  if (id === "targetDrawer") fillTargets();
+  if (id === "libDrawer") renderLibrary();
+}
+function closeDrawer(id) { document.getElementById(id).classList.remove("open"); }
+function closeOnBackdrop(e, id) { if (e.target.id === id) closeDrawer(id); }
+
+function switchTab(colId, btn) {
+  document.querySelectorAll(".col-card").forEach(function(c) { c.classList.remove("mobile-active"); });
+  document.querySelectorAll(".tab-btn").forEach(function(b) { b.classList.remove("active"); });
+  document.getElementById(colId).classList.add("mobile-active");
+  btn.classList.add("active");
+}
+
+function setMode(mode) {
+  viewMode = mode;
+  document.getElementById("btnDaily").className = mode === "daily" ? "toggle-btn active" : "toggle-btn";
+  document.getElementById("btnWeekly").className = mode === "weekly" ? "toggle-btn active" : "toggle-btn";
+  document.getElementById("macroPeriodLabel").innerText = mode === "weekly" ? "Weekly (7d) Totals" : "Daily Totals";
+  updateUI();
+}
+
+function changeQty(idx, val) {
+  var item = foods[idx];
+  var next = Number(val);
+  if (!Number.isFinite(next) || next < 0) next = 0;
+  item.qty = Math.min(100000, Math.round(next * 100) / 100);
+  item.max = Math.max(item.max, item.qty);
+  document.getElementById("slider_" + idx).max = item.max;
+  document.getElementById("slider_" + idx).value = item.qty;
+  document.getElementById("quantity_" + idx).value = item.qty;
+  save();
+  updateUI();
+}
+function stepQty(idx, delta) { changeQty(idx, foods[idx].qty + delta); }
+
+function changePrice(idx, val) {
+  var num = Number(val);
+  foods[idx].price = Number.isFinite(num) ? Math.max(0, num) : 0;
+  save();
+  updateUI();
+}
+
+function removeFood(idx) {
+  foods.splice(idx, 1);
+  renderFoods();
+  updateUI();
+  save();
+}
+
+function resetDefaults() {
+  foods = JSON.parse(JSON.stringify(defaultFoods));
+  renderFoods();
+  updateUI();
+  save();
+}
+
+function renderFoods() {
+  var container = document.getElementById("foodList");
+  if (!foods.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:0.84rem;">No foods in plan. Click + Add Food or Saved Library above.</div>';
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < foods.length; i++) {
+    var item = foods[i];
+    html += '<div class="food-card">' +
+      '<div class="food-top"><span class="food-name">' + escapeHTML(item.name) + '</span><span class="food-cost" id="cost_' + i + '">RM0.00</span></div>' +
+      '<div class="slider-row">' +
+        '<button type="button" class="step-btn" onclick="stepQty(' + i + ', -' + item.step + ')">-</button>' +
+        '<input type="range" id="slider_' + i + '" min="0" max="' + item.max + '" step="' + item.step + '" value="' + item.qty + '" oninput="changeQty(' + i + ', this.value)">' +
+        '<button type="button" class="step-btn" onclick="stepQty(' + i + ', ' + item.step + ')">+</button>' +
+        '<input class="qty-input" type="number" id="quantity_' + i + '" min="0" step="any" value="' + item.qty + '" onchange="changeQty(' + i + ', this.value)">' +
+      '</div>' +
+      '<div class="food-meta"><span id="qtyLabel_' + i + '"></span><span id="calMeta_' + i + '"></span></div>' +
+      '<div class="food-meta">' +
+        '<span>Price (' + escapeHTML(item.unitLabel) + '): RM <input class="price-edit" type="number" min="0" step="0.01" value="' + item.price.toFixed(2) + '" onchange="changePrice(' + i + ', this.value)"></span>' +
+        '<button type="button" class="del-btn" onclick="removeFood(' + i + ')">Remove</button>' +
+      '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+
 function updateUI() {
   var mult = viewMode === "weekly" ? 7 : 1;
   var totalCost = 0, totalCal = 0, totalP = 0, totalC = 0, totalF = 0, totalFib = 0;
