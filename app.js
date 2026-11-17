@@ -10,88 +10,82 @@ var defaultFoods = [
   { id: "oil", name: "Cooking Oil", qty: 1.5, min: 0, max: 4, step: 0.5, unit: "tbsp", unitLabel: "RM/tbsp", price: 0.10, cal: 120, p: 0, c: 0, f: 14.0, fib: 0, shopUnit: "ml", shopDiv: 0.067, micros: { vitA: 0, vitB: 0, vitC: 0, vitD: 0, vitE: 15, vitK: 8, iron: 0, calc: 0, pot: 0 } }
 ];
 
-var defaultSettings = { weight: 72.5, goal: "maintain", energy: 1650, protein: 95, proteinPerKg: 1.3 };
-
-var foods = [];
+var STORAGE_KEY = "myNutriDashboard_v4";
+var foods = JSON.parse(JSON.stringify(defaultFoods));
 var library = [];
-var settings = {};
+var settings = { weight: 72.5, goal: "maintain", energy: 2000, protein: 90, proteinPerKg: 1.2 };
+var lastShopText = "";
 
-function loadState() {
-  try {
-    var saved = JSON.parse(localStorage.getItem("myNutriDashboard_v1"));
-    if (saved && Array.isArray(saved.foods)) {
-      foods = saved.foods;
-      library = Array.isArray(saved.library) ? saved.library : [];
-      settings = saved.settings ? Object.assign({}, defaultSettings, saved.settings) : Object.assign({}, defaultSettings);
-      return;
-    }
-  } catch (e) {}
-  foods = JSON.parse(JSON.stringify(defaultFoods));
-  library = JSON.parse(JSON.stringify(defaultFoods));
-  settings = Object.assign({}, defaultSettings);
-  saveState();
+function cloneObj(obj) {
+  return JSON.parse(JSON.stringify(obj));
 }
 
-function saveState() {
+function rememberFoods() {
   for (var i = 0; i < foods.length; i++) {
+    var food = foods[i];
     var idx = -1;
     for (var j = 0; j < library.length; j++) {
-      if (library[j].id === foods[i].id) { idx = j; break; }
+      if (library[j].id === food.id) { idx = j; break; }
     }
-    var copy = JSON.parse(JSON.stringify(foods[i]));
-    if (idx === -1) library.push(copy);
-    else library[idx] = copy;
+    if (idx < 0) library.push(cloneObj(food));
+    else library[idx] = cloneObj(food);
   }
-  localStorage.setItem("myNutriDashboard_v1", JSON.stringify({ foods: foods, library: library, settings: settings }));
-  document.getElementById("libCount").innerText = library.length;
 }
 
-function escapeHTML(str) {
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function save() {
+  rememberFoods();
+  renderLibrary();
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ foods: foods, library: library, settings: settings }));
+  } catch (e) {}
+}
+
+function escapeHTML(val) {
+  return String(val).replace(/[&<>"']/g, function(c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function openDrawer(id) {
+  closeAllDrawers();
+  document.getElementById("backdrop").classList.add("open");
+  document.getElementById(id).classList.add("open");
+}
+
+function closeAllDrawers() {
+  document.getElementById("backdrop").classList.remove("open");
+  var drawers = document.querySelectorAll(".drawer");
+  for (var i = 0; i < drawers.length; i++) drawers[i].classList.remove("open");
+}
+
+function switchMobileTab(tabName) {
+  var panels = ["Foods", "Macros", "Shop"];
+  for (var i = 0; i < panels.length; i++) {
+    var p = panels[i];
+    document.getElementById("panel" + p).classList.toggle("mobile-active", p === tabName);
+    document.getElementById("tab" + p).classList.toggle("active", p === tabName);
+  }
 }
 
 function setMode(mode) {
   viewMode = mode;
   document.getElementById("btnDaily").className = mode === "daily" ? "toggle-btn active" : "toggle-btn";
   document.getElementById("btnWeekly").className = mode === "weekly" ? "toggle-btn active" : "toggle-btn";
+  document.getElementById("macroPeriodLabel").textContent = mode === "weekly" ? "Weekly (7d) Totals" : "Daily Totals";
   updateUI();
 }
 
-function switchMobileTab(panelId, btn) {
-  var panels = document.querySelectorAll(".col-panel");
-  for (var i = 0; i < panels.length; i++) panels[i].classList.remove("mob-active");
-  document.getElementById(panelId).classList.add("mob-active");
-
-  var tabs = document.querySelectorAll(".mob-tab");
-  for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove("active");
-  btn.classList.add("active");
-}
-
-function openDrawer(id) {
-  if (id === "drawerLib") renderLibrary();
-  if (id === "drawerTargets") fillTargetsForm();
-  document.getElementById(id).classList.add("open");
-}
-
-function closeDrawer(id) {
-  document.getElementById(id).classList.remove("open");
-}
-
-function closeDrawerOnBg(e, id) {
-  if (e.target.id === id) closeDrawer(id);
-}
-
 function changeQty(idx, val) {
-  var next = parseFloat(val);
-  if (isNaN(next) || next < 0) next = 0;
-  next = Math.round(next * 100) / 100;
-  foods[idx].qty = next;
-  if (next > foods[idx].max) foods[idx].max = next;
+  var item = foods[idx];
+  var next = Number(val);
+  if (!isFinite(next) || next < 0) next = 0;
+  item.qty = Math.min(100000, Math.round(next * 100) / 100);
+  item.max = Math.max(item.max, item.qty);
   var slider = document.getElementById("slider_" + idx);
-  var numBox = document.getElementById("num_" + idx);
-  if (slider) { slider.max = foods[idx].max; slider.value = next; }
-  if (numBox) { numBox.value = next; }
-  saveState();
+  var qInput = document.getElementById("quantity_" + idx);
+  if (slider) { slider.max = item.max; slider.value = item.qty; }
+  if (qInput) { qInput.value = item.qty; }
+  save();
   updateUI();
 }
 
@@ -99,273 +93,282 @@ function stepQty(idx, delta) {
   changeQty(idx, foods[idx].qty + delta);
 }
 
-function changePrice(idx, val) {
-  var p = parseFloat(val);
-  foods[idx].price = (!isNaN(p) && p >= 0) ? p : 0;
-  saveState();
+function removeFood(idx) {
+  rememberFoods();
+  foods.splice(idx, 1);
+  renderFoods();
   updateUI();
+  save();
 }
 
-function removeFood(idx) {
-  foods.splice(idx, 1);
-  saveState();
-  renderFoods();
+function changePrice(idx, val) {
+  var value = Number(val);
+  foods[idx].price = isFinite(value) ? Math.max(0, value) : 0;
+  save();
   updateUI();
 }
 
 function resetDefaults() {
-  foods = JSON.parse(JSON.stringify(defaultFoods));
-  saveState();
+  rememberFoods();
+  foods = cloneObj(defaultFoods);
+  save();
   renderFoods();
   updateUI();
 }
 
 function renderFoods() {
   var container = document.getElementById("foodList");
-  if (!foods.length) {
-    container.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:12px;">No foods in dashboard. Click <strong>+ Add Food</strong> or open <strong>Saved Library</strong>.</div>';
-    return;
-  }
   var html = "";
   for (var i = 0; i < foods.length; i++) {
     var item = foods[i];
     html += '<div class="food-card">' +
-      '<div class="food-row1">' +
-        '<span class="food-title">' + escapeHTML(item.name) + '</span>' +
-        '<span class="food-price-tag" id="cost_' + i + '">RM0.00</span>' +
-      '</div>' +
-      '<div class="slider-controls">' +
-        '<button type="button" class="step-btn" onclick="stepQty(' + i + ', -' + item.step + ')">−</button>' +
-        '<input type="range" id="slider_' + i + '" min="0" max="' + item.max + '" step="' + item.step + '" value="' + item.qty + '" oninput="changeQty(' + i + ', this.value)" />' +
+      '<div class="food-top"><span class="food-name">' + escapeHTML(item.name) + '</span><span class="food-cost" id="cost_' + i + '">RM0.00</span></div>' +
+      '<div class="slider-row">' +
+        '<button type="button" class="step-btn" onclick="stepQty(' + i + ', -' + item.step + ')">-</button>' +
+        '<input type="range" id="slider_' + i + '" min="0" max="' + item.max + '" step="' + item.step + '" value="' + item.qty + '" oninput="changeQty(' + i + ', this.value)">' +
         '<button type="button" class="step-btn" onclick="stepQty(' + i + ', ' + item.step + ')">+</button>' +
-        '<input type="number" class="qty-num" id="num_' + i + '" step="any" min="0" value="' + item.qty + '" onchange="changeQty(' + i + ', this.value)" />' +
+        '<input class="qty-input" type="number" id="quantity_' + i + '" min="0" step="any" value="' + item.qty + '" onchange="changeQty(' + i + ', this.value)">' +
       '</div>' +
-      '<div class="food-row3">' +
-        '<span id="meta_' + i + '">0 kcal • 0g P</span>' +
-        '<span>RM <input type="number" step="0.01" min="0" class="inline-price" value="' + item.price.toFixed(2) + '" onchange="changePrice(' + i + ', this.value)" /> (' + escapeHTML(item.unitLabel) + ') &nbsp;|&nbsp; <button type="button" class="del-btn" onclick="removeFood(' + i + ')">Remove</button></span>' +
+      '<div class="food-meta"><span id="qty_' + i + '"></span><span id="calMeta_' + i + '"></span></div>' +
+      '<div class="food-meta">' +
+        '<label>Price (' + escapeHTML(item.unitLabel) + '): RM <input class="price-edit" type="number" min="0" step="0.01" value="' + item.price + '" onchange="changePrice(' + i + ', this.value)"></label>' +
+        '<button type="button" class="mini-del" onclick="removeFood(' + i + ')">Remove</button>' +
       '</div>' +
     '</div>';
   }
-  container.innerHTML = html;
+  container.innerHTML = html || '<p class="helper">No foods in plan. Click + Add Food at the top.</p>';
 }
-
-var lastShopText = "";
 
 function updateUI() {
   var mult = viewMode === "weekly" ? 7 : 1;
   var totalCost = 0, totalCal = 0, totalP = 0, totalC = 0, totalF = 0, totalFib = 0;
   var micros = { vitA: 0, vitB: 0, vitC: 0, vitD: 0, vitE: 0, vitK: 0, iron: 0, calc: 0, pot: 0 };
   var shopHTML = "";
-  var shopLines = [];
+  var shopLines = ["7-Day Grocery List:"];
 
   for (var i = 0; i < foods.length; i++) {
     var item = foods[i];
     var unitPrice = item.priceDiv ? (item.price / item.priceDiv) : item.price;
-    var dCost = item.qty * unitPrice;
-    var dCal = item.qty * item.cal;
-    var dP = item.qty * item.p;
+    var dailyCost = item.qty * unitPrice;
+    var dailyCal = item.qty * item.cal;
+    var dailyP = item.qty * item.p;
 
-    totalCost += dCost;
-    totalCal += dCal;
-    totalP += dP;
+    totalCost += dailyCost;
+    totalCal += dailyCal;
+    totalP += dailyP;
     totalC += item.qty * item.c;
     totalF += item.qty * item.f;
     totalFib += item.qty * item.fib;
 
-    if (item.micros) {
-      var microMult = item.priceDiv ? (item.qty / item.priceDiv) : item.qty;
-      for (var k in micros) {
-        micros[k] += microMult * (item.micros[k] || 0);
-      }
+    for (var k in micros) {
+      var mVal = item.micros && item.micros[k] ? item.micros[k] : 0;
+      micros[k] += item.qty * mVal;
     }
 
     var costEl = document.getElementById("cost_" + i);
-    var metaEl = document.getElementById("meta_" + i);
-    if (costEl) costEl.innerText = "RM" + (dCost * mult).toFixed(2);
-    if (metaEl) metaEl.innerText = (Math.round(item.qty * mult * 10) / 10) + " " + item.unit + " • " + Math.round(dCal * mult) + " kcal • " + (dP * mult).toFixed(1) + "g P";
+    var qtyEl = document.getElementById("qty_" + i);
+    var calEl = document.getElementById("calMeta_" + i);
+    if (costEl) costEl.innerText = "RM" + (dailyCost * mult).toFixed(2);
+    if (qtyEl) qtyEl.innerText = (Math.round(item.qty * mult * 10) / 10) + " " + item.unit;
+    if (calEl) calEl.innerText = Math.round(dailyCal * mult) + " kcal · " + (dailyP * mult).toFixed(1) + "g protein";
 
     if (item.qty > 0) {
-      var wAmt = (item.qty * 7) / item.shopDiv;
-      var wCost = (dCost * 7).toFixed(2);
-      shopHTML += '<div class="shop-item">' +
-        '<div><div>' + escapeHTML(item.name) + '</div><div class="shop-sub">RM' + wCost + ' / week</div></div>' +
-        '<div class="shop-qty">' + wAmt.toFixed(2) + ' ' + escapeHTML(item.shopUnit) + '</div>' +
-      '</div>';
-      shopLines.push("- " + item.name + ": " + wAmt.toFixed(2) + " " + item.shopUnit + " (RM" + wCost + ")");
+      var weeklyUnits = (item.qty * 7) / (item.shopDiv || 1);
+      var lineText = item.name + ": " + weeklyUnits.toFixed(2) + " " + item.shopUnit + " (RM" + (dailyCost * 7).toFixed(2) + ")";
+      shopLines.push("- " + lineText);
+      shopHTML += '<div class="shop-row"><span>' + escapeHTML(item.name) + '</span><strong>' + weeklyUnits.toFixed(2) + ' ' + escapeHTML(item.shopUnit) + ' (RM' + (dailyCost * 7).toFixed(2) + ')</strong></div>';
     }
   }
 
-  lastShopText = "7-Day Grocery List (Total: RM" + (totalCost * 7).toFixed(2) + "):
-" + shopLines.join("
-");
+  shopLines.push("Total Weekly Cost: RM" + (totalCost * 7).toFixed(2));
+  lastShopText = shopLines.join("\n");
 
-  document.getElementById("lblCost").innerText = viewMode === "weekly" ? "Weekly Cost (7d)" : "Daily Cost";
-  document.getElementById("lblCal").innerText = viewMode === "weekly" ? "Weekly Energy (7d)" : "Daily Energy";
-  document.getElementById("lblPro").innerText = viewMode === "weekly" ? "Weekly Protein (7d)" : "Daily Protein";
-  document.getElementById("nutrientModeLbl").innerText = viewMode === "weekly" ? "Weekly Totals" : "Daily Totals";
+  document.getElementById("costTitle").innerText = viewMode === "weekly" ? "Weekly Cost" : "Daily Cost";
+  document.getElementById("calTitle").innerText = viewMode === "weekly" ? "Weekly Energy" : "Daily Energy";
+  document.getElementById("proTitle").innerText = viewMode === "weekly" ? "Weekly Protein" : "Daily Protein";
 
-  document.getElementById("valCost").innerText = "RM" + (totalCost * mult).toFixed(2);
-  document.getElementById("subCost").innerText = viewMode === "weekly" ? "Daily avg: RM" + totalCost.toFixed(2) : "Weekly: RM" + (totalCost * 7).toFixed(2);
+  document.getElementById("kpiCost").innerText = "RM" + (totalCost * mult).toFixed(2);
+  document.getElementById("kpiCostSub").innerText = viewMode === "weekly" ? "Daily avg: RM" + totalCost.toFixed(2) : "Weekly: RM" + (totalCost * 7).toFixed(2);
+  document.getElementById("kpiCal").innerText = Math.round(totalCal * mult).toLocaleString() + " kcal";
+  document.getElementById("kpiCalSub").innerText = "Target: " + Math.round(settings.energy * mult).toLocaleString() + " kcal";
+  document.getElementById("kpiPro").innerText = (totalP * mult).toFixed(1) + "g";
+  document.getElementById("kpiProSub").innerText = "Target: " + (settings.protein * mult).toFixed(1) + "g";
 
-  document.getElementById("valCal").innerText = Math.round(totalCal * mult).toLocaleString() + " kcal";
-  document.getElementById("subCal").innerText = "Target: " + Math.round(settings.energy * mult).toLocaleString() + " kcal";
+  var goalNames = { lose: "Lose weight", maintain: "Maintain", gain: "Gain weight" };
+  document.getElementById("profileSummary").textContent = settings.weight + " kg · " + (goalNames[settings.goal] || "Maintain") + " · Target: " + settings.energy + " kcal | " + settings.protein + "g Protein";
 
-  document.getElementById("valPro").innerText = (totalP * mult).toFixed(1) + "g";
-  document.getElementById("subPro").innerText = "Target: " + Math.round(settings.protein * mult) + "g";
-
-  var goalLabel = { lose: "Lose Weight", maintain: "Maintain", gain: "Gain Muscle" }[settings.goal] || "Maintain";
-  document.getElementById("profileBanner").innerText = settings.weight + " kg • " + goalLabel + " • Target: " + settings.energy + " kcal | " + settings.protein + "g Protein/day";
-
-  var statusBox = document.getElementById("statusBox");
+  var statusCard = document.getElementById("statusCard");
+  var banner = document.getElementById("statusBanner");
   if (totalCal < 1450) {
-    statusBox.className = "status-pill st-danger";
-    statusBox.innerText = "Below 1,450 kcal BMR floor (" + Math.round(totalCal) + " kcal/day). Add bread, eggs, or oil.";
-  } else if (totalP < settings.protein) {
-    statusBox.className = "status-pill st-warn";
-    statusBox.innerText = "Safe calories (" + Math.round(totalCal) + " kcal), but " + (settings.protein - totalP).toFixed(1) + "g short of protein target.";
+    statusCard.className = "kpi status-danger";
+    banner.textContent = "Below 1,450 kcal BMR floor (" + Math.round(totalCal) + " kcal/day). Add bread, eggs, or oil.";
+  } else if (totalCal <= settings.energy * 1.05) {
+    statusCard.className = "kpi status-ok";
+    banner.textContent = "On Track: " + Math.round(totalCal) + " kcal & " + totalP.toFixed(1) + "g protein/day (Safe BMR met).";
   } else {
-    statusBox.className = "status-pill st-ok";
-    statusBox.innerText = "On track: " + Math.round(totalCal) + " kcal & " + totalP.toFixed(1) + "g protein/day.";
+    statusCard.className = "kpi status-warn";
+    banner.textContent = "Calorie Surplus: " + Math.round(totalCal) + " kcal/day (above " + settings.energy + " kcal target).";
   }
 
-  var macros = [
+  var macroData = [
     { name: "Protein", val: totalP * mult, goal: settings.protein * mult, color: "#38bdf8" },
-    { name: "Carbohydrates", val: totalC * mult, goal: (settings.energy * 0.45 / 4) * mult, color: "#10b981" },
-    { name: "Dietary Fat", val: totalF * mult, goal: (settings.energy * 0.30 / 9) * mult, color: "#f59e0b" },
-    { name: "Fiber", val: totalFib * mult, goal: 25 * mult, color: "#a78bfa" }
+    { name: "Carbohydrates", val: totalC * mult, goal: (settings.energy * 0.5 / 4) * mult, color: "#10b981" },
+    { name: "Dietary Fat", val: totalF * mult, goal: (settings.energy * 0.3 / 9) * mult, color: "#f59e0b" },
+    { name: "Fiber", val: totalFib * mult, goal: (settings.energy / 1000 * 14) * mult, color: "#a78bfa" }
   ];
   var macroHTML = "";
-  for (var m = 0; m < macros.length; m++) {
-    var md = macros[m];
-    var pct = Math.min(100, Math.round((md.val / Math.max(1, md.goal)) * 100));
-    macroHTML += '<div class="macro-item">' +
-      '<div class="macro-top"><span>' + md.name + '</span><strong>' + md.val.toFixed(1) + 'g / ' + Math.round(md.goal) + 'g</strong></div>' +
-      '<div class="track"><div class="fill" style="width:' + pct + '%;background:' + md.color + ';"></div></div>' +
+  for (var m = 0; m < macroData.length; m++) {
+    var md = macroData[m];
+    var pct = md.goal > 0 ? Math.min(100, Math.round((md.val / md.goal) * 100)) : 0;
+    macroHTML += '<div class="macro-row">' +
+      '<div class="macro-label"><span>' + md.name + '</span><strong>' + md.val.toFixed(1) + 'g / ' + Math.round(md.goal) + 'g</strong></div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;background:' + md.color + ';"></div></div>' +
     '</div>';
   }
   document.getElementById("macroBars").innerHTML = macroHTML;
 
-  var microKeys = [
+  var microList = [
     { k: "vitA", n: "Vit A" }, { k: "vitB", n: "Vit B" }, { k: "vitC", n: "Vit C" },
     { k: "vitD", n: "Vit D" }, { k: "vitE", n: "Vit E" }, { k: "vitK", n: "Vit K" },
     { k: "iron", n: "Iron" }, { k: "calc", n: "Calcium" }, { k: "pot", n: "Potassium" }
   ];
   var microHTML = "";
-  for (var j = 0; j < microKeys.length; j++) {
-    var mk = microKeys[j];
-    var v = Math.min(100, Math.round(micros[mk.k]));
-    var col = v >= 80 ? "#10b981" : (v >= 40 ? "#f59e0b" : "#f43f5e");
-    microHTML += '<div class="micro-box"><div class="micro-lbl">' + mk.n + '</div><div class="micro-val" style="color:' + col + ';">' + v + '%</div></div>';
+  for (var j = 0; j < microList.length; j++) {
+    var ml = microList[j];
+    var val = Math.min(100, Math.round(micros[ml.k]));
+    var color = val >= 80 ? "#10b981" : (val >= 40 ? "#f59e0b" : "#f43f5e");
+    microHTML += '<div class="micro-chip"><div class="micro-name">' + ml.n + '</div><div class="micro-pct" style="color:' + color + ';">' + val + '%</div></div>';
   }
   document.getElementById("microGrid").innerHTML = microHTML;
 
-  document.getElementById("shoppingList").innerHTML = shopHTML || '<div style="color:var(--muted);font-size:0.84rem;">No items selected yet.</div>';
+  document.getElementById("shoppingList").innerHTML = shopHTML || '<p class="helper">No items selected.</p>';
 }
 
 function copyShoppingList() {
-  if (!lastShopText) return;
+  if (!navigator.clipboard) return;
   navigator.clipboard.writeText(lastShopText).then(function() {
     var btn = document.getElementById("copyShopBtn");
-    btn.innerText = "Copied!";
-    setTimeout(function() { btn.innerText = "Copy List"; }, 1500);
+    btn.textContent = "Copied!";
+    setTimeout(function() { btn.textContent = "Copy List"; }, 1500);
   });
 }
 
 document.getElementById("addFoodForm").addEventListener("submit", function(e) {
   e.preventDefault();
-  var fd = new FormData(e.target);
-  var serving = Math.max(0.1, parseFloat(fd.get("serving")) || 1);
-  var unit = fd.get("unit").trim();
-  var qty = Math.max(0, parseFloat(fd.get("qty")) || 0);
-  var newItem = {
+  var fd = new FormData(e.currentTarget);
+  var serving = Number(fd.get("serving")) || 1;
+  var qty = Number(fd.get("qty")) || 0;
+  var unit = String(fd.get("unit")).trim();
+  var item = {
     id: "custom_" + Date.now(),
-    name: fd.get("name").trim(),
+    name: String(fd.get("name")).trim(),
+    unit: unit,
     qty: qty,
     min: 0,
-    max: Math.max(qty * 2, serving * 4),
-    step: (unit === "g" || unit === "ml") ? 10 : 0.5,
-    unit: unit,
-    unitLabel: "RM/" + serving + unit,
-    price: Math.max(0, parseFloat(fd.get("price")) || 0),
+    max: Math.max(400, qty, serving * 4),
+    step: unit.match(/^(g|ml)$/i) ? 10 : 0.5,
+    price: Number(fd.get("price")) || 0,
     priceDiv: serving,
-    cal: (parseFloat(fd.get("cal")) || 0) / serving,
-    p: (parseFloat(fd.get("p")) || 0) / serving,
-    c: (parseFloat(fd.get("c")) || 0) / serving,
-    f: (parseFloat(fd.get("f")) || 0) / serving,
-    fib: (parseFloat(fd.get("fib")) || 0) / serving,
+    unitLabel: "RM/" + serving + " " + unit,
     shopUnit: unit,
     shopDiv: 1,
+    cal: (Number(fd.get("cal")) || 0) / serving,
+    p: (Number(fd.get("p")) || 0) / serving,
+    c: (Number(fd.get("c")) || 0) / serving,
+    f: (Number(fd.get("f")) || 0) / serving,
+    fib: (Number(fd.get("fib")) || 0) / serving,
     micros: { vitA: 0, vitB: 0, vitC: 0, vitD: 0, vitE: 0, vitK: 0, iron: 0, calc: 0, pot: 0 }
   };
-  foods.push(newItem);
-  saveState();
+  if (!item.name || !item.unit) return;
+  foods.push(item);
   renderFoods();
   updateUI();
-  e.target.reset();
-  closeDrawer("drawerAdd");
+  save();
+  e.currentTarget.reset();
+  closeAllDrawers();
 });
 
 function renderLibrary() {
-  var q = document.getElementById("libSearch").value.toLowerCase().trim();
+  var q = (document.getElementById("librarySearch").value || "").toLowerCase().trim();
+  document.getElementById("libCountBadge").textContent = library.length;
   var html = "";
   for (var i = 0; i < library.length; i++) {
     var item = library[i];
     if (q && item.name.toLowerCase().indexOf(q) === -1) continue;
-    var inPlan = false;
+    var active = false;
     for (var j = 0; j < foods.length; j++) {
-      if (foods[j].id === item.id) { inPlan = true; break; }
+      if (foods[j].id === item.id) { active = true; break; }
     }
     var basis = item.priceDiv || 1;
-    html += '<div class="lib-item">' +
-      '<div><strong>' + escapeHTML(item.name) + '</strong><div style="color:var(--muted);font-size:0.75rem;">' + Math.round(item.cal * basis) + ' kcal • ' + (item.p * basis).toFixed(1) + 'g P per ' + basis + ' ' + escapeHTML(item.unit) + '</div></div>' +
-      '<button type="button" class="nav-btn" ' + (inPlan ? 'disabled style="opacity:0.5;"' : 'onclick="addFromLibrary(' + i + ')"') + '>' + (inPlan ? 'In Plan' : '+ Add') + '</button>' +
+    html += '<div class="lib-row">' +
+      '<div><strong>' + escapeHTML(item.name) + '</strong><div class="helper">' + Math.round(item.cal * basis) + ' kcal · ' + (item.p * basis).toFixed(1) + 'g protein / ' + basis + ' ' + escapeHTML(item.unit) + '</div></div>' +
+      '<button type="button" class="btn" onclick="restoreFood(' + i + ')" ' + (active ? "disabled" : "") + '>' + (active ? "In Plan" : "+ Add") + '</button>' +
     '</div>';
   }
-  document.getElementById("libList").innerHTML = html || '<div style="color:var(--muted);font-size:0.84rem;">No matching foods found.</div>';
+  document.getElementById("savedFoods").innerHTML = html || '<p class="helper">No matching saved foods.</p>';
 }
 
-function addFromLibrary(idx) {
+function restoreFood(idx) {
   var item = library[idx];
   if (!item) return;
-  foods.push(JSON.parse(JSON.stringify(item)));
-  saveState();
+  for (var i = 0; i < foods.length; i++) {
+    if (foods[i].id === item.id) return;
+  }
+  foods.push(cloneObj(item));
+  renderFoods();
+  updateUI();
+  save();
+}
+
+document.getElementById("librarySearch").addEventListener("input", renderLibrary);
+
+function fillTargets() {
+  var form = document.getElementById("targetsForm");
+  for (var k in settings) {
+    if (form.elements[k]) form.elements[k].value = settings[k];
+  }
+}
+
+document.getElementById("estimateTargets").addEventListener("click", function() {
+  var form = document.getElementById("targetsForm");
+  var w = Number(form.elements.weight.value) || 72.5;
+  var g = form.elements.goal.value;
+  var pKg = Number(form.elements.proteinPerKg.value) || 1.2;
+  var mult = g === "lose" ? 27 : (g === "gain" ? 37 : 32);
+  form.elements.energy.value = Math.round(w * mult);
+  form.elements.protein.value = Math.round(w * pKg * 10) / 10;
+  document.getElementById("targetHelp").textContent = "Calculated! Click Apply Targets below to update your dashboard.";
+});
+
+document.getElementById("targetsForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  var fd = new FormData(e.currentTarget);
+  settings = {
+    weight: Number(fd.get("weight")) || 72.5,
+    goal: fd.get("goal") || "maintain",
+    energy: Number(fd.get("energy")) || 2000,
+    protein: Number(fd.get("protein")) || 90,
+    proteinPerKg: Number(fd.get("proteinPerKg")) || 1.2
+  };
+  updateUI();
+  save();
+  closeAllDrawers();
+});
+
+function initialize() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && Array.isArray(saved.foods)) {
+      foods = saved.foods;
+      library = Array.isArray(saved.library) ? saved.library : [];
+      if (saved.settings) settings = saved.settings;
+    }
+  } catch (e) {}
+  rememberFoods();
+  fillTargets();
   renderFoods();
   updateUI();
   renderLibrary();
 }
 
-function fillTargetsForm() {
-  var form = document.getElementById("targetsForm");
-  form.elements.weight.value = settings.weight;
-  form.elements.goal.value = settings.goal;
-  form.elements.proteinPerKg.value = settings.proteinPerKg;
-  form.elements.energy.value = settings.energy;
-  form.elements.protein.value = settings.protein;
-}
-
-function autoEstimateTargets() {
-  var form = document.getElementById("targetsForm");
-  var w = parseFloat(form.elements.weight.value) || 72.5;
-  var g = form.elements.goal.value;
-  var pKg = parseFloat(form.elements.proteinPerKg.value) || 1.3;
-  var mult = g === "lose" ? 24 : (g === "gain" ? 33 : 29);
-  form.elements.energy.value = Math.round(w * mult);
-  form.elements.protein.value = Math.round(w * pKg);
-}
-
-document.getElementById("targetsForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  var fd = new FormData(e.target);
-  settings.weight = parseFloat(fd.get("weight")) || 72.5;
-  settings.goal = fd.get("goal");
-  settings.proteinPerKg = parseFloat(fd.get("proteinPerKg")) || 1.3;
-  settings.energy = parseInt(fd.get("energy"), 10) || 1650;
-  settings.protein = parseInt(fd.get("protein"), 10) || 95;
-  saveState();
-  updateUI();
-  closeDrawer("drawerTargets");
-});
-
-loadState();
-renderFoods();
-updateUI();
+initialize();
