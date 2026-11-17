@@ -3,242 +3,326 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f172a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MY Nutrition & Grocery Dashboard</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <title>MY Nutrition &amp; Grocery Planner</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#0b1120" />
   <style>
     :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
+      --bg: #0b1120;
+      --surface: #131c31;
+      --surface-2: #1e293b;
+      --surface-3: #283548;
       --text: #f8fafc;
       --muted: #94a3b8;
       --accent: #10b981;
       --blue: #38bdf8;
       --amber: #f59e0b;
       --rose: #f43f5e;
-      --border: #334155;
+      --border: #243247;
     }
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); line-height: 1.45; }
-    .app { max-width: 960px; margin: 0 auto; }
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
-    h1 { font-size: 1.45rem; margin: 0; font-weight: 700; }
-    .subtitle { font-size: 0.86rem; color: var(--muted); margin-top: 2px; }
-    .toggle-group { display: inline-flex; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
-    .toggle-btn { background: transparent; color: var(--muted); border: none; padding: 8px 16px; border-radius: 7px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-    .toggle-btn.active { background: var(--accent); color: #062c22; }
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 14px; }
-    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-    .kpi-title { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
-    .kpi-value { font-size: 1.65rem; font-weight: 800; margin: 6px 0 4px; }
-    .kpi-sub { font-size: 0.82rem; color: var(--muted); }
-    .status-banner { padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 500; margin-bottom: 16px; border: 1px solid transparent; }
-    .status-ok { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); color: #6ee7b7; }
-    .status-warn { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); color: #fcd34d; }
-    .main-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
-    @media (max-width: 780px) { .main-grid { grid-template-columns: 1fr; } }
-    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
-    .panel-title { font-size: 1.02rem; font-weight: 700; margin: 0; }
-    .badge { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; background: rgba(16, 185, 129, 0.16); color: #6ee7b7; padding: 3px 8px; border-radius: 999px; }
-    .reset-btn { background: var(--surface-2); color: var(--text); border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-    .reset-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .primary-btn { background: var(--accent); color: #062c22; border: none; padding: 9px 14px; border-radius: 8px; font-size: 0.86rem; font-weight: 700; cursor: pointer; }
-    .helper { font-size: 0.8rem; color: var(--muted); margin: 4px 0 10px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: 10px; margin-bottom: 10px; }
-    label.field { display: flex; flex-direction: column; gap: 4px; font-size: 0.78rem; color: var(--muted); }
-    input[type="text"], input[type="number"], input[type="search"], select {
-      background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 8px 10px; border-radius: 8px; font-size: 0.88rem; width: 100%;
+    * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+    
+    .dashboard { display: flex; flex-direction: column; height: 100vh; max-width: 1520px; margin: 0 auto; padding: 12px 16px; gap: 10px; }
+
+    /* Top Header Bar */
+    .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; flex-shrink: 0; }
+    .brand h1 { font-size: 1.1rem; margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .brand .sub { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+    .top-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .nav-btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 11px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
+    .nav-btn:hover { background: var(--surface-3); border-color: #3b4f6b; }
+    .nav-btn.primary { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
+    .toggle-group { display: inline-flex; background: var(--bg); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+    .toggle-btn { background: transparent; color: var(--muted); border: none; padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.78rem; cursor: pointer; }
+    .toggle-btn.active { background: var(--accent); color: #052e22; }
+
+    /* Compact KPI Strip */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex-shrink: 0; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; }
+    .kpi-top { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .kpi-main { font-size: 1.35rem; font-weight: 800; margin: 2px 0; }
+    .kpi-foot { font-size: 0.75rem; color: var(--muted); }
+    .status-pill { font-size: 0.76rem; font-weight: 600; padding: 6px 10px; border-radius: 8px; line-height: 1.35; }
+    .st-ok { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .st-warn { background: rgba(245, 158, 11, 0.12); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .st-danger { background: rgba(244, 63, 94, 0.12); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    /* 3-Column Dashboard Workspace */
+    .workspace { display: grid; grid-template-columns: 1.35fr 1fr 0.95fr; gap: 12px; flex: 1; min-height: 0; }
+    .col-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .col-head { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .col-head h2 { font-size: 0.9rem; font-weight: 700; margin: 0; }
+    .col-body { padding: 10px 14px; overflow-y: auto; flex: 1; }
+    .col-body::-webkit-scrollbar { width: 6px; }
+    .col-body::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+    /* Food Cards inside Left Column */
+    .food-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 8px; }
+    .food-row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .food-title { font-weight: 600; font-size: 0.86rem; }
+    .food-price-tag { font-weight: 700; color: var(--accent); font-size: 0.86rem; }
+    .slider-controls { display: flex; align-items: center; gap: 8px; }
+    input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 5px; }
+    .step-btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); width: 26px; height: 26px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .step-btn:hover { background: var(--surface-3); }
+    .qty-num { width: 58px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 5px; font-size: 0.8rem; text-align: right; font-weight: 600; }
+    .food-row3 { display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; color: var(--muted); margin-top: 6px; }
+    .inline-price { width: 48px; background: transparent; border: none; border-bottom: 1px dashed var(--muted); color: var(--text); font-size: 0.74rem; text-align: right; }
+    .del-btn { background: transparent; border: none; color: #f87171; font-size: 0.74rem; cursor: pointer; padding: 0; }
+
+    /* Middle Column: Macros & Micros */
+    .macro-item { margin-bottom: 10px; }
+    .macro-top { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+    .track { height: 8px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 5px; transition: width 0.2s; }
+    .section-divider { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 14px 0 8px; font-weight: 700; }
+    .micro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .micro-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 6px; text-align: center; }
+    .micro-lbl { font-size: 0.72rem; color: var(--muted); }
+    .micro-val { font-size: 0.9rem; font-weight: 700; margin-top: 2px; }
+
+    /* Right Column: Shopping List */
+    .shop-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+    .shop-item:last-child { border-bottom: none; }
+    .shop-qty { font-weight: 700; color: var(--text); text-align: right; }
+    .shop-sub { font-size: 0.72rem; color: var(--muted); }
+
+    /* Slide-over Drawers */
+    .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: flex-end; z-index: 50; }
+    .drawer-backdrop.open { display: flex; }
+    .drawer { width: 100%; max-width: 400px; background: var(--surface); border-left: 1px solid var(--border); height: 100%; display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+    .drawer-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 14px; }
+    .drawer-head h3 { margin: 0; font-size: 1.05rem; }
+    .close-btn { background: var(--surface-2); color: var(--text); border: none; width: 30px; height: 30px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.86rem; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-full { width: 100%; background: var(--accent); color: #052e22; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 6px; }
+    .lib-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border: 1px solid var(--border); padding: 9px 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.82rem; }
+
+    /* Mobile Tabs (Hidden on Desktop) */
+    .mobile-tabs { display: none; }
+    @media (max-width: 960px) {
+      html, body { overflow: auto; height: auto; }
+      .dashboard { height: auto; min-height: 100vh; padding-bottom: 68px; }
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .workspace { display: block; }
+      .col-panel { display: none; height: auto; }
+      .col-panel.mob-active { display: flex; }
+      .mobile-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; gap: 6px; z-index: 40; }
+      .mob-tab { background: transparent; border: none; color: var(--muted); padding: 8px 4px; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+      .mob-tab.active { background: var(--surface-2); color: var(--accent); }
     }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .food-card { background: rgba(15, 23, 42, 0.55); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-    .food-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .food-name { font-weight: 600; font-size: 0.95rem; }
-    .food-cost { font-weight: 700; color: var(--accent); font-size: 0.95rem; }
-    .slider-row { display: flex; align-items: center; gap: 8px; }
-    input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; height: 6px; }
-    .step-btn { background: var(--surface-2); color: var(--text); border: none; width: 32px; height: 32px; border-radius: 7px; font-weight: 700; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
-    .qty-input { width: 72px !important; text-align: right; padding: 6px 8px !important; }
-    .food-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--muted); margin-top: 8px; gap: 8px; }
-    .price-edit { width: 68px !important; padding: 4px 6px !important; text-align: right; display: inline-block; }
-    .library-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-    .library-row:last-child { border-bottom: none; }
-    .macro-row { margin-bottom: 12px; }
-    .macro-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; }
-    .progress-track { height: 10px; background: var(--bg); border-radius: 6px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 6px; }
-    .micro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .micro-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; text-align: center; }
-    .micro-name { font-size: 0.75rem; color: var(--muted); }
-    .micro-pct { font-size: 0.95rem; font-weight: 700; margin-top: 2px; }
-    .shop-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.86rem; }
-    .shop-row:last-child { border-bottom: none; }
   </style>
 </head>
 <body>
-<div class="app">
-  <header>
-    <div>
-      <h1>MY Nutrition &amp; Grocery Planner</h1>
-      <div class="subtitle" id="profileSummary">Your portions, your targets.</div>
+<div class="dashboard">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <h1>MY Nutrition & Grocery Dashboard</h1>
+      <div class="sub" id="profileBanner">72.5 kg • Maintain • Target: 2,000 kcal | 90g Protein</div>
     </div>
-    <div class="toggle-group">
-      <button type="button" class="toggle-btn active" id="btnDaily" onclick="setMode('daily')">Daily View</button>
-      <button type="button" class="toggle-btn" id="btnWeekly" onclick="setMode('weekly')">Weekly (7 Days)</button>
-    </div>
-  </header>
-
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-title" id="costTitle">Daily Grocery Cost</div>
-      <div class="kpi-value" style="color:var(--accent);" id="kpiCost">RM0.00</div>
-      <div class="kpi-sub" id="kpiCostSub">Weekly: RM0.00</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title" id="calTitle">Daily Energy</div>
-      <div class="kpi-value" id="kpiCal">0 kcal</div>
-      <div class="kpi-sub" id="kpiCalSub">Target: 2,000 kcal / day</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title" id="proTitle">Daily Protein</div>
-      <div class="kpi-value" style="color:var(--blue);" id="kpiPro">0g</div>
-      <div class="kpi-sub" id="kpiProSub">Target: 90g / day</div>
+    <div class="top-actions">
+      <button class="nav-btn primary" onclick="openDrawer('drawerAdd')">+ Add Food</button>
+      <button class="nav-btn" onclick="openDrawer('drawerLib')">Saved Library (<span id="libCount">0</span>)</button>
+      <button class="nav-btn" onclick="openDrawer('drawerTargets')">Targets & BMR</button>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="btnDaily" onclick="setMode('daily')">Daily</button>
+        <button class="toggle-btn" id="btnWeekly" onclick="setMode('weekly')">Weekly (7d)</button>
+      </div>
     </div>
   </div>
 
-  <div id="statusBanner" class="status-banner status-ok"></div>
-
-  <div class="panel">
-    <div class="panel-header">
-      <h2 class="panel-title">Your daily targets</h2>
-      <span class="badge">PERSONALIZE</span>
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi">
+      <div class="kpi-top"><span id="lblCost">Daily Cost</span></div>
+      <div class="kpi-main" style="color:var(--accent);" id="valCost">RM0.00</div>
+      <div class="kpi-foot" id="subCost">Weekly: RM0.00</div>
     </div>
-    <form id="targetsForm">
-      <div class="form-grid">
-        <label class="field">Body weight (kg)
-          <input type="number" name="weight" min="20" max="400" step="0.1" value="72.5" required />
-        </label>
-        <label class="field">Goal
-          <select name="goal">
-            <option value="lose">Lose weight</option>
-            <option value="maintain" selected>Maintain weight</option>
-            <option value="gain">Gain weight</option>
-          </select>
-        </label>
-        <label class="field">Protein factor (g/kg)
-          <input type="number" name="proteinPerKg" min="0.5" max="4" step="0.1" value="1.2" required />
-        </label>
-        <label class="field">Energy target (kcal/day)
-          <input type="number" name="energy" min="800" max="20000" step="10" value="2000" required />
-        </label>
-        <label class="field">Protein target (g/day)
-          <input type="number" name="protein" min="20" max="2000" step="1" value="90" required />
-        </label>
-      </div>
-      <div class="btn-row">
-        <button type="button" class="reset-btn" id="estimateTargets">Estimate from weight</button>
-        <button type="submit" class="primary-btn">Apply targets</button>
-      </div>
-      <p class="helper" id="targetHelp">Set your own targets, or estimate using weight &times; 27 / 32 / 37 kcal for loss / maintenance / gain and your protein factor.</p>
-    </form>
+    <div class="kpi">
+      <div class="kpi-top"><span id="lblCal">Daily Energy</span></div>
+      <div class="kpi-main" id="valCal">0 kcal</div>
+      <div class="kpi-foot" id="subCal">Target: 2,000 kcal</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><span id="lblPro">Daily Protein</span></div>
+      <div class="kpi-main" style="color:var(--blue);" id="valPro">0g</div>
+      <div class="kpi-foot" id="subPro">Target: 90g</div>
+    </div>
+    <div class="kpi" style="justify-content:center;">
+      <div id="statusBox" class="status-pill st-ok">Loading...</div>
+    </div>
   </div>
 
-  <div class="main-grid">
-    <div>
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Adjust Daily Portions</h2>
-          <button type="button" class="reset-btn" onclick="resetDefaults()">Reset</button>
-        </div>
-        <p class="helper" id="saveStatus">Offline mobile storage ready.</p>
-        <div id="foodList"></div>
+  <!-- 3-Column Dashboard Workspace -->
+  <div class="workspace">
+    <!-- Column 1: Food Portions -->
+    <div class="col-panel mob-active" id="panelFoods">
+      <div class="col-head">
+        <h2>Daily Food Portions</h2>
+        <button class="nav-btn" style="padding:4px 8px;font-size:0.75rem;" onclick="resetDefaults()">Reset</button>
       </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Add a custom food</h2>
-        </div>
-        <p class="helper">Use the same serving basis as the label (e.g., 40 g, 100 g, or 1 piece). All nutrition values and price refer to that serving.</p>
-        <form id="addFoodForm">
-          <div class="form-grid">
-            <label class="field">Food name
-              <input type="text" name="name" placeholder="e.g. White Rice" required />
-            </label>
-            <label class="field">Serving unit
-              <input type="text" name="unit" placeholder="e.g. g, slice, egg" required />
-            </label>
-            <label class="field">Units per serving
-              <input type="number" name="serving" min="0.1" step="any" value="100" required />
-            </label>
-            <label class="field">Daily quantity (units)
-              <input type="number" name="qty" min="0" step="any" value="100" required />
-            </label>
-            <label class="field">Price per serving (RM)
-              <input type="number" name="price" min="0" step="0.01" value="0.50" required />
-            </label>
-            <label class="field">Energy per serving (kcal)
-              <input type="number" name="cal" min="0" step="any" value="130" required />
-            </label>
-            <label class="field">Protein per serving (g)
-              <input type="number" name="p" min="0" step="any" value="2.7" required />
-            </label>
-            <label class="field">Carbs per serving (g)
-              <input type="number" name="c" min="0" step="any" value="28" required />
-            </label>
-            <label class="field">Fat per serving (g)
-              <input type="number" name="f" min="0" step="any" value="0.3" required />
-            </label>
-            <label class="field">Fiber per serving (g)
-              <input type="number" name="fib" min="0" step="any" value="0.4" required />
-            </label>
-          </div>
-          <button type="submit" class="primary-btn">Save food &amp; add to plan</button>
-          <p class="helper" id="scanStatus"></p>
-        </form>
-      </div>
+      <div class="col-body" id="foodList"></div>
     </div>
 
-    <div>
-      <div class="panel">
-        <div class="panel-header"><h2 class="panel-title">Macronutrient Breakdown</h2></div>
-        <p class="helper">Protein uses your target. Carbs 50%, fat 30%, fiber 14 g / 1,000 kcal.</p>
+    <!-- Column 2: Macros & Micros -->
+    <div class="col-panel" id="panelNutrients">
+      <div class="col-head">
+        <h2>Macros & Micronutrients</h2>
+        <span style="font-size:0.75rem;color:var(--muted);" id="nutrientModeLbl">Daily Totals</span>
+      </div>
+      <div class="col-body">
         <div id="macroBars"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><h2 class="panel-title">Daily Micronutrient Coverage</h2></div>
+        <div class="section-divider">Daily Micronutrient Coverage (% RDI)</div>
         <div class="micro-grid" id="microGrid"></div>
       </div>
-
-      <div class="panel">
-        <div class="panel-header"><h2 class="panel-title">7-Day Grocery List</h2></div>
-        <div id="shoppingList"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Saved foods</h2>
-          <span class="badge" id="libraryCount">0 FOODS</span>
-        </div>
-        <input type="search" id="librarySearch" placeholder="Find a saved food..." style="margin-bottom:8px;" />
-        <p class="helper" id="libraryStatus">Foods stay here when removed from your plan.</p>
-        <div id="savedFoods"></div>
-      </div>
     </div>
+
+    <!-- Column 3: 7-Day Grocery List -->
+    <div class="col-panel" id="panelShop">
+      <div class="col-head">
+        <h2>7-Day Grocery List</h2>
+        <button class="nav-btn" style="padding:4px 8px;font-size:0.75rem;" id="copyShopBtn" onclick="copyShoppingList()">Copy List</button>
+      </div>
+      <div class="col-body" id="shoppingList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<div class="mobile-tabs">
+  <button class="mob-tab active" onclick="switchMobileTab('panelFoods', this)">Foods & Sliders</button>
+  <button class="mob-tab" onclick="switchMobileTab('panelNutrients', this)">Macros & Micros</button>
+  <button class="mob-tab" onclick="switchMobileTab('panelShop', this)">Grocery List</button>
+</div>
+
+<!-- Drawer: Add Custom Food -->
+<div class="drawer-backdrop" id="drawerAdd" onclick="closeDrawerOnBg(event, 'drawerAdd')">
+  <div class="drawer">
+    <div class="drawer-head">
+      <h3>Add Custom Food</h3>
+      <button class="close-btn" onclick="closeDrawer('drawerAdd')">×</button>
+    </div>
+    <form id="addFoodForm">
+      <div class="form-group">
+        <label>Food Name</label>
+        <input type="text" name="name" placeholder="e.g., Jasmine Rice (Cooked)" required />
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Unit (g, ml, slice, scoop)</label>
+          <input type="text" name="unit" placeholder="g" required />
+        </div>
+        <div class="form-group">
+          <label>Label Serving Size</label>
+          <input type="number" step="any" min="0.1" name="serving" value="100" required />
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Price per Serving (RM)</label>
+          <input type="number" step="0.01" min="0" name="price" placeholder="0.50" required />
+        </div>
+        <div class="form-group">
+          <label>Starting Daily Qty</label>
+          <input type="number" step="any" min="0" name="qty" value="100" required />
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Calories (kcal)</label>
+          <input type="number" step="any" min="0" name="cal" placeholder="130" required />
+        </div>
+        <div class="form-group">
+          <label>Protein (g)</label>
+          <input type="number" step="any" min="0" name="p" placeholder="2.7" required />
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Carbs (g)</label>
+          <input type="number" step="any" min="0" name="c" placeholder="28" required />
+        </div>
+        <div class="form-group">
+          <label>Fat (g)</label>
+          <input type="number" step="any" min="0" name="f" placeholder="0.3" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Fiber (g)</label>
+        <input type="number" step="any" min="0" name="fib" value="0" required />
+      </div>
+      <button type="submit" class="btn-full">Save & Add to Dashboard</button>
+    </form>
+  </div>
+</div>
+
+<!-- Drawer: Saved Food Library -->
+<div class="drawer-backdrop" id="drawerLib" onclick="closeDrawerOnBg(event, 'drawerLib')">
+  <div class="drawer">
+    <div class="drawer-head">
+      <h3>Saved Food Library</h3>
+      <button class="close-btn" onclick="closeDrawer('drawerLib')">×</button>
+    </div>
+    <div class="form-group">
+      <input type="text" id="libSearch" placeholder="Search saved foods..." oninput="renderLibrary()" />
+    </div>
+    <div id="libList"></div>
+  </div>
+</div>
+
+<!-- Drawer: Targets & BMR -->
+<div class="drawer-backdrop" id="drawerTargets" onclick="closeDrawerOnBg(event, 'drawerTargets')">
+  <div class="drawer">
+    <div class="drawer-head">
+      <h3>Personal Targets & BMR</h3>
+      <button class="close-btn" onclick="closeDrawer('drawerTargets')">×</button>
+    </div>
+    <form id="targetsForm">
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Body Weight (kg)</label>
+          <input type="number" step="0.5" min="30" max="250" name="weight" required />
+        </div>
+        <div class="form-group">
+          <label>Goal</label>
+          <select name="goal">
+            <option value="lose">Lose Weight</option>
+            <option value="maintain">Maintain Weight</option>
+            <option value="gain">Gain Muscle</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Protein Target (g per kg body weight)</label>
+        <input type="number" step="0.1" min="0.8" max="3.0" name="proteinPerKg" required />
+      </div>
+      <button type="button" class="nav-btn" style="width:100%;margin-bottom:10px;" onclick="autoEstimateTargets()">Auto-Calculate From Weight & Goal</button>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Daily Calorie Target (kcal)</label>
+          <input type="number" step="10" min="1200" max="8000" name="energy" required />
+        </div>
+        <div class="form-group">
+          <label>Daily Protein Target (g)</label>
+          <input type="number" step="1" min="40" max="400" name="protein" required />
+        </div>
+      </div>
+      <button type="submit" class="btn-full">Apply Targets</button>
+    </form>
   </div>
 </div>
 
 <script src="app.js"></script>
 <script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
-      navigator.serviceWorker.register("./sw.js").catch(function () {});
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').catch(function() {});
     });
   }
 </script>
