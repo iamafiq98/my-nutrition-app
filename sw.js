@@ -1,8 +1,10 @@
-const CACHE_NAME = 'my-nutrition-dashboard-v5';
+const CACHE_NAME = 'my-nutrition-v6';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=5',
+  './styles.css?v=6',
+  './scanner.js?v=6',
+  './app.js?v=6',
   './manifest.json',
   './icon.svg'
 ];
@@ -25,7 +27,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('nal.usda.gov') || event.request.url.includes('openfoodfacts.org')) {
+  const url = event.request.url;
+  if (url.includes('nal.usda.gov') || url.includes('openfoodfacts.org') || url.includes('jsdelivr.net')) {
     event.respondWith(fetch(event.request));
     return;
   }
