@@ -116,6 +116,7 @@
 
 
           <div class="sub-head">2. Or Search Online Database (USDA / Open Food Facts)</div>
+          <div class="search-row"><input type="password" id="usdaKeyBox" placeholder="Paste personal USDA API key here (saved privately on your device)" onchange="saveUsdaKey(this.value)" /></div>
           <div class="search-row">
             <input type="text" id="onlineQuery" placeholder="Search food or barcode (e.g. gardenia, banana, rice)..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchOnline();}" />
             <button type="button" class="btn" id="onlineBtn" onclick="searchOnline()">Search</button>
@@ -195,8 +196,8 @@
     </div>
   </main>
 
-  <script src="scanner.js?v=7"></script>
-  <script src="app.js?v=7"></script>
+  <script src="scanner.js?v=9"></script>
+  <script src="app.js?v=9"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
