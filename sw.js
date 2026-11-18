@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-nutrition-v9';
+const CACHE_NAME = 'my-nutrition-v11';
 const ASSETS = [
   './',
   './index.html',
