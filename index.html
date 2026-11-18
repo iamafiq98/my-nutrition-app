@@ -102,13 +102,18 @@
             <div class="sub-head" style="margin-top:0;">1. Scan Nutrition Label (Camera or Gallery)</div>
             <div class="scan-actions">
               <label class="btn btn-accent file-btn">
-                Camera / Upload Photo
-                <input type="file" id="ocrInput" accept="image/*" onchange="scanLabelImage(event)" hidden />
+                Take Photo (Camera)
+                <input type="file" accept="image/*" capture="environment" onchange="scanLabelImage(event)" hidden />
               </label>
-              <span id="ocrStatus" class="muted-sm">Snap a clear photo of the nutrition table to auto-fill</span>
+              <label class="btn file-btn">
+                Upload From Gallery
+                <input type="file" accept="image/*" onchange="scanLabelImage(event)" hidden />
+              </label>
             </div>
+            <div id="ocrStatus" class="muted-sm" style="margin-top:6px;">Snap a clear close-up of the nutrition table to auto-fill</div>
             <img id="ocrPreview" class="ocr-preview" alt="Label preview" hidden />
           </div>
+
 
           <div class="sub-head">2. Or Search Online Database (USDA / Open Food Facts)</div>
           <div class="search-row">
@@ -190,8 +195,8 @@
     </div>
   </main>
 
-  <script src="scanner.js?v=6"></script>
-  <script src="app.js?v=6"></script>
+  <script src="scanner.js?v=7"></script>
+  <script src="app.js?v=7"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
